@@ -1,0 +1,21 @@
+cd C:\Users\adsle\Documents\CounselorApp
+python -m venv venv
+venv\Scripts\activate
+
+http://127.0.0.1:5000
+
+Alex
+I am a programmer who spends long days insidfe the office working on company code
+I like that I am able to make alot of pay, and that it comes naturally for me
+I cannot often sociallize with other people and also feel like my work is unfullfilling
+I really like gardenning and in addition I like taking part in my town's envieromental safety board
+No 
+I am not opposed to a tech if it is in an envieromental context, I also do not really want to teach
+
+
+Test answers:
+A A B A B A 
+
+A A B A B A B A A A
+
+5 3 4 3 3 1 2 4 3 3
