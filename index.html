@@ -138,7 +138,7 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 30px; /* Increased margin to create a larger gap */
-            text-align: center;
+            text-align: left;
         }
 
         .job-row {
@@ -231,7 +231,7 @@
 <body>
     <div class="container">
         <div class="chat-container">
-            <div class="title">Career Coach</div>
+            <div class="title">Career Coach ver. 0.1</div>
             <div class="button-container">
                 <button class="start-button" onclick="startSession()" id="startButton">Start Session</button>
                 <button class="stop-session-button" onclick="stopSession()" id="stopSessionButton">End Session</button>
@@ -244,7 +244,7 @@
             </div>
         </div>
         <div class="job-container" id="jobContainer">
-            <div class="job-title">Click 'More Info' to learn additional details about each job. <br> Select the 2-3 jobs that interest you the most, and then click 'Help Me Choose' to continue.</div>
+            <div class="job-title">Click 'More Info' to learn additional details about each job.<br><br> Select the 2-3 jobs that interest you the most, and then click 'Help Me Choose' to continue.</div>
             <div id="jobGrid"></div>
             <div class="test-buttons">
                 <button class="generate-test-button" onclick="generatePersonalizedTest()" disabled
@@ -355,7 +355,9 @@
         }
 
         async function sendMessage() {
-            if (isApiProcessing) return;
+            if (isApiProcessing) {
+                return;
+            }
 
             const userInput = document.getElementById('userInput').value;
             if (!userInput) return;
@@ -385,6 +387,9 @@
             if (data.message.includes("here are some job suggestions")) {
                 displayJobGrid(data.message);
             }
+
+            // Put focus back to the input field
+            document.getElementById('userInput').focus();
         }
 
         async function generatePersonalizedTest() {
