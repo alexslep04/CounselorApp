@@ -61,39 +61,39 @@
             margin-bottom: 10px;
         }
 
-        .message.user {
-            background-color: #e1ffc7;
-            text-align: right;
-        }
+            .message.user {
+                background-color: #e1ffc7;
+                text-align: right;
+            }
 
-        .message.bot {
-            background-color: #f1f1f1;
-        }
+            .message.bot {
+                background-color: #f1f1f1;
+            }
 
         .input-container {
             display: flex;
             margin-bottom: 20px;
         }
 
-        .input-container input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px 0 0 4px;
-        }
+            .input-container input {
+                flex: 1;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px 0 0 4px;
+            }
 
-        .input-container button {
-            padding: 10px;
-            border: none;
-            background-color: #007bff;
-            color: #fff;
-            cursor: pointer;
-            border-radius: 0 4px 4px 0;
-        }
+            .input-container button {
+                padding: 10px;
+                border: none;
+                background-color: #007bff;
+                color: #fff;
+                cursor: pointer;
+                border-radius: 0 4px 4px 0;
+            }
 
-        .input-container button:hover {
-            background-color: #0056b3;
-        }
+                .input-container button:hover {
+                    background-color: #0056b3;
+                }
 
         .button-container {
             display: flex;
@@ -115,18 +115,18 @@
             color: #fff;
         }
 
-        .start-button:hover {
-            background-color: #218838;
-        }
+            .start-button:hover {
+                background-color: #218838;
+            }
 
         .stop-session-button {
             background-color: #dc3545;
             color: #fff;
         }
 
-        .stop-session-button:hover {
-            background-color: #c82333;
-        }
+            .stop-session-button:hover {
+                background-color: #c82333;
+            }
 
         .job-container {
             flex: 1; /* Reduced flex value to make it narrower */
@@ -172,7 +172,7 @@
             border-radius: 50%;
             width: 50px;
             height: 50px;
-            animation: spin 2s linear infinite; 
+            animation: spin 2s linear infinite;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -204,27 +204,27 @@
             color: #000;
         }
 
-        .generate-test-button:hover {
-            background-color: #e0a800;
-        }
+            .generate-test-button:hover {
+                background-color: #e0a800;
+            }
 
         .regenerate-jobs-button {
             background-color: #17a2b8;
             color: #fff;
         }
 
-        .regenerate-jobs-button:hover {
-            background-color: #138496;
-        }
+            .regenerate-jobs-button:hover {
+                background-color: #138496;
+            }
 
         .save-preferences-button {
             background-color: #6c757d;
             color: #fff;
         }
 
-        .save-preferences-button:hover {
-            background-color: #5a6268;
-        }
+            .save-preferences-button:hover {
+                background-color: #5a6268;
+            }
     </style>
 </head>
 
@@ -239,7 +239,7 @@
             <div class="messages" id="messages"></div>
             <div class="input-container">
                 <input type="text" id="userInput" placeholder="Type your message here..." disabled
-                    onkeydown="checkEnter(event)">
+                       onkeydown="checkEnter(event)">
                 <button onclick="sendMessage()" disabled id="sendButton">Send</button>
             </div>
         </div>
@@ -248,11 +248,17 @@
             <div id="jobGrid"></div>
             <div class="test-buttons">
                 <button class="generate-test-button" onclick="generatePersonalizedTest()" disabled
-                    id="generateTestButton">Help Me Choose</button>
+                        id="generateTestButton">
+                    Help Me Choose
+                </button>
                 <button class="regenerate-jobs-button" onclick="regenerateUncheckedJobs()" disabled
-                    id="regenerateJobsButton" style="display:none;">Regenerate Unchecked Jobs</button>
+                        id="regenerateJobsButton" style="display:none;">
+                    Regenerate Unchecked Jobs
+                </button>
                 <button class="save-preferences-button" onclick="saveJobPreferences()" disabled
-                    id="savePreferencesButton" style="display:none;">Save Job Preferences</button>
+                        id="savePreferencesButton" style="display:none;">
+                    Save Job Preferences
+                </button>
             </div>
         </div>
         <div class="loading-spinner" id="loadingSpinner"></div>
@@ -398,38 +404,44 @@
             const checkboxes = document.querySelectorAll('.job-checkbox:checked');
             const selectedJobs = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-            addMessage(`Help me choose between the selected jobs`, 'user');
+            if (selectedJobs.length > 0) {
+                const jobNames = selectedJobs.join(' and ');
+                addMessage(`Help me choose between ${jobNames}`, 'user');
 
-            toggleLoadingSpinner(true);
-            toggleInputs(true);
-            isApiProcessing = true;
+                toggleLoadingSpinner(true);
+                toggleInputs(true);
+                isApiProcessing = true;
 
-            const response = await fetch('/generate_personalized_test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    jobs: selectedJobs,
-                    prompt: "I am looking for a new job, create a specifically tailored personality test to decide what job would suit me better."
-                })
-            });
+                const response = await fetch('/generate_personalized_test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        jobs: selectedJobs,
+                        prompt: "I am looking for a new job, create a specifically tailored personality test to decide what job would suit me better."
+                    })
+                });
 
-            toggleLoadingSpinner(false);
-            toggleInputs(false);
-            isApiProcessing = false;
+                toggleLoadingSpinner(false);
+                toggleInputs(false);
+                isApiProcessing = false;
 
-            const data = await response.json();
-            addMessage(`${data.test}`, 'bot');
+                const data = await response.json();
+                addMessage(`${data.test}`, 'bot');
 
-            // Enable inputs to allow the user to submit test answers
-            document.getElementById('userInput').disabled = false;
-            document.getElementById('sendButton').disabled = false;
+                // Enable inputs to allow the user to submit test answers
+                document.getElementById('userInput').disabled = false;
+                document.getElementById('sendButton').disabled = false;
 
-            // Save the test questions to session data
-            sessionStorage.setItem('personalityTest', data.test);
+                // Save the test questions to session data
+                sessionStorage.setItem('personalityTest', data.test);
+            } else {
+                alert("Please select at least one job.");
+            }
         }
+
 
         async function saveJobPreferences() {
             if (isApiProcessing) return;
