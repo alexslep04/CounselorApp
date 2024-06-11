@@ -162,48 +162,6 @@ def evaluate_test():
     
     return jsonify({"message": f"Based on your answers, the best fit job for you is: {best_fit_job}. Thank you for using our service!"})
 
-@app.route('/regenerate_unchecked_jobs', methods=['POST'])
-def regenerate_unchecked_jobs():
-    user_id = request.json['user_id']
-    checked_jobs = request.json['checked_jobs']
-    unchecked_jobs = request.json['unchecked_jobs']
-
-    session = sessions.get(user_id)
-    if not session:
-        return jsonify({"message": "Session not found. Please start a new session."}), 404
-
-    # Generate new suggestions for unchecked jobs
-    prompt = (f"The user liked the following jobs: {', '.join(checked_jobs)}. "
-              f"Please suggest new jobs to replace the following: {', '.join(unchecked_jobs)}.")
-    
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ]
-    )
-    new_suggestions = response.choices[0].message.content.strip().split('\n')
-
-    # Merge checked jobs with new suggestions
-    updated_suggestions = checked_jobs + new_suggestions
-    session['data']['job_suggestions'] = ', '.join(updated_suggestions)
-    message = f"Here are the updated job suggestions:\n{', '.join(updated_suggestions)}"
-
-    return jsonify({"message": message, "job_suggestions": updated_suggestions})
-
-@app.route('/job_preferences', methods=['POST'])
-def job_preferences():
-    user_id = request.json['user_id']
-    preferences = request.json['preferences']
-
-    session = sessions.get(user_id)
-    if not session:
-        return jsonify({"message": "Session not found. Please start a new session."}), 404
-
-    session['data']['job_preferences'] = preferences
-    return jsonify({"message": "Job preferences saved."})
-
 def generate_prompt(data):
     previous_suggestions = data.get('job_suggestions', 'Not provided')
     return f"User data: {data}. Previous job suggestions: {previous_suggestions}. Suggest 5 new potential job roles."

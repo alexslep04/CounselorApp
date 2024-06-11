@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,9 +18,9 @@
 
         .container {
             display: flex;
-            width: 1600px; /* Increased the total width */
+            width: 1600px;
             height: 800px;
-            gap: 20px; /* Add gap between the chat and job containers */
+            gap: 20px;
         }
 
         .chat-container,
@@ -35,7 +34,7 @@
         }
 
         .chat-container {
-            flex: 2.5; /* Increased flex value to make it wider */
+            flex: 2.5;
             border-right: 1px solid #ccc;
         }
 
@@ -129,15 +128,15 @@
             }
 
         .job-container {
-            flex: 1; /* Reduced flex value to make it narrower */
-            display: none; /* Hide the job container by default */
+            flex: 1;
+            display: none;
             flex-direction: column;
         }
 
         .job-title {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 30px; /* Increased margin to create a larger gap */
+            margin-bottom: 30px;
             text-align: left;
         }
 
@@ -163,11 +162,11 @@
         }
 
         .test-buttons {
-            margin-top: 30px; /* Increased margin to create a larger gap */
+            margin-top: 30px;
         }
 
         .loading-spinner {
-            border: 8px solid #c8c4c4; /*spinner color maybe changhe for nicholas*/
+            border: 8px solid #c8c4c4;
             border-top: 8px solid #3498db;
             border-radius: 50%;
             width: 50px;
@@ -207,27 +206,8 @@
             .generate-test-button:hover {
                 background-color: #e0a800;
             }
-
-        .regenerate-jobs-button {
-            background-color: #17a2b8;
-            color: #fff;
-        }
-
-            .regenerate-jobs-button:hover {
-                background-color: #138496;
-            }
-
-        .save-preferences-button {
-            background-color: #6c757d;
-            color: #fff;
-        }
-
-            .save-preferences-button:hover {
-                background-color: #5a6268;
-            }
     </style>
 </head>
-
 <body>
     <div class="container">
         <div class="chat-container">
@@ -251,14 +231,6 @@
                         id="generateTestButton">
                     Help Me Choose
                 </button>
-                <button class="regenerate-jobs-button" onclick="regenerateUncheckedJobs()" disabled
-                        id="regenerateJobsButton" style="display:none;">
-                    Regenerate Unchecked Jobs
-                </button>
-                <button class="save-preferences-button" onclick="saveJobPreferences()" disabled
-                        id="savePreferencesButton" style="display:none;">
-                    Save Job Preferences
-                </button>
             </div>
         </div>
         <div class="loading-spinner" id="loadingSpinner"></div>
@@ -273,8 +245,6 @@
             document.getElementById('sendButton').disabled = disabled;
             document.getElementById('startButton').disabled = disabled;
             document.getElementById('generateTestButton').disabled = disabled;
-            document.getElementById('regenerateJobsButton').disabled = disabled;
-            document.getElementById('savePreferencesButton').disabled = disabled;
             document.getElementById('stopSessionButton').disabled = disabled;
         }
 
@@ -328,36 +298,6 @@
                 toggleInputs(false);
                 isApiProcessing = false;
             });
-        }
-
-        async function regenerateUncheckedJobs() {
-            if (isApiProcessing) return;
-
-            toggleInputs(true);
-            isApiProcessing = true;
-
-            const checkboxes = document.querySelectorAll('.job-checkbox');
-            const checkedJobs = Array.from(checkboxes)
-                .filter(checkbox => checkbox.checked)
-                .map(checkbox => checkbox.value);
-
-            const uncheckedJobs = Array.from(checkboxes)
-                .filter(checkbox => !checkbox.checked)
-                .map(checkbox => checkbox.value);
-
-            const response = await fetch('/regenerate_unchecked_jobs', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ user_id: userId, checked_jobs: checkedJobs, unchecked_jobs: uncheckedJobs })
-            });
-
-            const data = await response.json();
-            displayJobGrid(data.message);
-
-            toggleInputs(false);
-            isApiProcessing = false;
         }
 
         async function sendMessage() {
@@ -442,35 +382,6 @@
             }
         }
 
-
-        async function saveJobPreferences() {
-            if (isApiProcessing) return;
-
-            const checkboxes = document.querySelectorAll('.job-checkbox:checked');
-            const preferences = Array.from(checkboxes)
-                .map(checkbox => checkbox.value)
-                .join(', ');
-
-            toggleLoadingSpinner(true);
-            toggleInputs(true);
-            isApiProcessing = true;
-
-            const response = await fetch('/job_preferences', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ user_id: userId, preferences: preferences })
-            });
-
-            toggleLoadingSpinner(false);
-            toggleInputs(false);
-            isApiProcessing = false;
-
-            const data = await response.json();
-            addMessage(data.message, 'bot');
-        }
-
         function addMessage(message, sender) {
             const messageElement = document.createElement('div');
             messageElement.className = `message ${sender}`;
@@ -482,12 +393,11 @@
 
         function displayJobGrid(message) {
             const jobContainer = document.getElementById('jobContainer');
-            jobContainer.style.display = 'flex'; // Make the job container visible
+            jobContainer.style.display = 'flex';
 
             const jobGrid = document.getElementById('jobGrid');
             jobGrid.innerHTML = '';
 
-            // Remove the introductory message and keep only job suggestions
             const jobSuggestions = message.split('\n').slice(2).join('\n');
 
             const jobRegex = /(?:^\d+\.\s)?(.+?)\:\s*(.+)$/gm;
@@ -537,7 +447,6 @@
             });
 
             document.getElementById('generateTestButton').disabled = false;
-            document.getElementById('regenerateJobsButton').disabled = false;
         }
 
         function limitCheckedBoxes() {
@@ -553,7 +462,6 @@
         async function generateMoreInfo(job) {
             toggleLoadingSpinner(true);
 
-            // Add the message to the chat box
             addMessage(`Tell me more about being a ${job}`, 'user');
 
             const response = await fetch('/generate_more_info', {
@@ -577,5 +485,4 @@
         }
     </script>
 </body>
-
 </html>
