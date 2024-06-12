@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 from openai import OpenAI
 import os
+import fitz  # PyMuPDF
+import tempfile
 
 client = OpenAI(api_key='sk-proj-bMRs70IJUB9sPRWYTo5AT3BlbkFJdTJyVq9vvBq00vLsZ1Jo')
 
@@ -162,15 +164,52 @@ def evaluate_test():
     
     return jsonify({"message": f"Based on your answers, the best fit job for you is: {best_fit_job}. Thank you for using our service!"})
 
+@app.route('/upload_pdf', methods=['POST'])
+def upload_pdf():
+    user_id = request.form['user_id']
+    file = request.files['file']
+    session = sessions.get(user_id)
+    
+    if not session:
+        return jsonify({"message": "Session not found. Please start a new session."}), 404
+    
+    # Save the file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+        file.save(temp_file.name)
+        temp_file_path = temp_file.name
+    
+    # Extract text from the PDF
+    pdf_text = extract_text_from_pdf(temp_file_path)
+    
+    # Update session data with PDF text
+    if 'pdf_context' not in session['data']:
+        session['data']['pdf_context'] = []
+    session['data']['pdf_context'].append(pdf_text)
+    
+    # Do not call the API here, just add the context
+    session['messages'].append({"role": "user", "content": "PDF uploaded successfully and added to context."})
+    
+    return jsonify({"message": "PDF uploaded successfully and added to context."})
+
+def extract_text_from_pdf(file_path):
+    text = ""
+    doc = fitz.open(file_path)
+    for page in doc:
+        text += page.get_text()
+    return text
+
 def generate_prompt(data):
     previous_suggestions = data.get('job_suggestions', 'Not provided')
-    return f"User data: {data}. Previous job suggestions: {previous_suggestions}. Suggest 5 new potential job roles."
+    pdf_context = "\n\n".join(data.get('pdf_context', ''))
+    return f"User data: {data}. Previous job suggestions: {previous_suggestions}. PDF context: {pdf_context}. Suggest 5 new potential job roles."
 
 def generate_personality_test_prompt(data):
     chosen_jobs = data['chosen_jobs']
     job_suggestions = data.get('job_suggestions', 'Not provided')
+    pdf_context = "\n\n".join(data.get('pdf_context', ''))
     return (f"The user has chosen the following jobs: {chosen_jobs}. "
             f"Job suggestions provided were: {job_suggestions}. "
+            f"PDF context: {pdf_context}. "
             f"Please identify the key differences between these jobs and create a personality test with 3 questions "
             f"to help determine which job is the best fit for the user.")
 
@@ -179,10 +218,12 @@ def generate_evaluation_prompt(data):
     answers = data['personality_test_answers']
     job_suggestions = data.get('job_suggestions', 'Not provided')
     job_preferences = data.get('job_preferences', '')
+    pdf_context = "\n\n".join(data.get('pdf_context', ''))
     return (f"The user has chosen the following jobs: {chosen_jobs}. "
             f"Job suggestions provided were: {job_suggestions}. "
             f"The user's job preferences are: {job_preferences}. "
             f"Here are their answers to the personality test: {answers}. "
+            f"PDF context: {pdf_context}. "
             f"Based on these answers, which job is the best fit for the user and why?")
 
 def ask_personality_test_questions(session):

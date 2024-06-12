@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Suggestion Chat</title>
     <style>
+        /* Existing styles */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -206,6 +207,19 @@
             .generate-test-button:hover {
                 background-color: #e0a800;
             }
+
+        /* Add styles for drag-and-drop area */
+        .drag-drop-area {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+            .drag-drop-area.dragover {
+                background-color: #f0f8ff;
+            }
     </style>
 </head>
 <body>
@@ -215,6 +229,10 @@
             <div class="button-container">
                 <button class="start-button" onclick="startSession()" id="startButton">Start Session</button>
                 <button class="stop-session-button" onclick="stopSession()" id="stopSessionButton">End Session</button>
+            </div>
+            <div class="drag-drop-area" id="dragDropArea">
+                Drag & Drop your PDF here or
+                <input type="file" id="fileInput" accept="application/pdf" onchange="uploadPDF(this.files[0])">
             </div>
             <div class="messages" id="messages"></div>
             <div class="input-container">
@@ -482,6 +500,47 @@
             if (event.key === 'Enter') {
                 sendMessage();
             }
+        }
+
+        // Drag-and-drop and file upload handling
+        const dragDropArea = document.getElementById('dragDropArea');
+
+        dragDropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            const file = event.dataTransfer.files[0];
+            if (file.type === 'application/pdf') {
+                uploadPDF(file);
+            } else {
+                alert('Please upload a valid PDF file.');
+            }
+        });
+
+        async function uploadPDF(file) {
+            toggleLoadingSpinner(true);
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('user_id', userId);
+
+            const response = await fetch('/upload_pdf', {
+                method: 'POST',
+                body: formData
+            });
+
+            toggleLoadingSpinner(false);
+
+            const data = await response.json();
+            addMessage(data.message, 'bot');
         }
     </script>
 </body>
