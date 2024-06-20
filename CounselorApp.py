@@ -123,6 +123,7 @@ def next_step():
         )
         session['data']['job_suggestions'] = response.choices[0].message.content.strip()
         next_message = f"Based on your input, here are some job suggestions:\n\n{session['data']['job_suggestions']}\n\n"
+        messages.append({"role": "assistant", "content": next_message})
         session['step'] = 11
     elif step == 11:
         next_message = "Please select 2-3 jobs for a personalized test."
@@ -137,10 +138,9 @@ def next_step():
             ]
         )
         next_message = response.choices[0].message.content.strip()
-        messages.append({"role": "assistant", "content": next_message})
-        session['messages'] = messages
+        if not messages or messages[-1]['content'] != next_message:  # Check for duplication
+            messages.append({"role": "assistant", "content": next_message})
 
-    messages.append({"role": "assistant", "content": next_message})
     session['messages'] = messages
     session['step'] += 1
     return jsonify({"message": next_message})
@@ -155,6 +155,9 @@ def generate_more_info():
     if not session:
         return jsonify({"message": "Session not found. Please start a new session."}), 404
 
+    user_query = f"Tell me more about being a {job}."
+    session['messages'].append({"role": "user", "content": user_query})
+
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
@@ -168,6 +171,9 @@ def generate_more_info():
         session['data']['job_infos'] = {}
     
     session['data']['job_infos'][job] = job_info
+    if not session['messages'] or session['messages'][-1]['content'] != job_info:  # Check for duplication
+        session['messages'].append({"role": "assistant", "content": job_info})
+
     return jsonify({"info": job_info})
 
 @app.route('/generate_personalized_test', methods=['POST'])
@@ -180,6 +186,9 @@ def generate_personalized_test():
     if not session:
         return jsonify({"message": "Session not found. Please start a new session."}), 404
 
+    user_query = f"Help me choose between {', '.join(jobs)}."
+    session['messages'].append({"role": "user", "content": user_query})
+
     # Create the prompt with selected jobs
     test_prompt = f"The user is looking for a new job. They are interested in the following jobs: {', '.join(jobs)}. {prompt}"
     response = client.chat.completions.create(
@@ -191,6 +200,9 @@ def generate_personalized_test():
     )
     test = response.choices[0].message.content.strip()
     session['data']['personality_test'] = test
+    if not session['messages'] or session['messages'][-1]['content'] != test:  # Check for duplication
+        session['messages'].append({"role": "assistant", "content": test})
+
     return jsonify({"test": test})
 
 @app.route('/evaluate_test', methods=['POST'])
@@ -207,6 +219,7 @@ def evaluate_test():
         session['data']['personality_test_answers'] = []
     
     session['data']['personality_test_answers'].append(test_answer)
+    session['messages'].append({"role": "user", "content": test_answer})
     
     # Check if the user has answered all test questions
     if len(session['data']['personality_test_answers']) < 3:
@@ -224,6 +237,8 @@ def evaluate_test():
     )
     best_fit_job = eval_response.choices[0].message.content.strip()
     session['data']['best_fit_job'] = best_fit_job
+    if not session['messages'] or session['messages'][-1]['content'] != best_fit_job:  # Check for duplication
+        session['messages'].append({"role": "assistant", "content": best_fit_job})
     
     return jsonify({"message": f"Based on your answers, the best fit job for you is: {best_fit_job}. Thank you for using our service!"})
 
