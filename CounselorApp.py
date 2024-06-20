@@ -70,6 +70,18 @@ def export_session():
 
     return send_file(file_path, as_attachment=True, download_name=f"session_{user_id}.txt")
 
+@app.route('/stop_session', methods=['POST'])
+def stop_session():
+    user_id = request.json['user_id']
+    
+    # Remove the session data for the user
+    if user_id in sessions:
+        del sessions[user_id]
+        return jsonify({"message": "Session ended successfully."})
+    else:
+        return jsonify({"message": "Session not found."}), 404
+
+
 
 @app.route('/next_step', methods=['POST'])
 def next_step():
