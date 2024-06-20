@@ -102,7 +102,8 @@
         }
 
         .start-button,
-        .stop-session-button {
+        .stop-session-button,
+        .export-session-button {
             padding: 10px 20px;
             border: none;
             cursor: pointer;
@@ -126,6 +127,15 @@
 
             .stop-session-button:hover {
                 background-color: #c82333;
+            }
+
+        .export-session-button {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+            .export-session-button:hover {
+                background-color: #0056b3;
             }
 
         .job-container {
@@ -225,10 +235,11 @@
 <body>
     <div class="container">
         <div class="chat-container">
-            <div class="title">Career Coach ver. 0.1a</div>
+            <div class="title">Career Coach ver. 0.2a</div>
             <div class="button-container">
                 <button class="start-button" onclick="startSession()" id="startButton">Start Session</button>
                 <button class="stop-session-button" onclick="stopSession()" id="stopSessionButton">End Session</button>
+                <button class="export-session-button" onclick="exportSession()" id="exportSessionButton">Export Session</button>
             </div>
             <div class="drag-drop-area" id="dragDropArea">
                 Drag & Drop your PDF here or
@@ -264,6 +275,7 @@
             document.getElementById('startButton').disabled = disabled;
             document.getElementById('generateTestButton').disabled = disabled;
             document.getElementById('stopSessionButton').disabled = disabled;
+            document.getElementById('exportSessionButton').disabled = disabled;
         }
 
         function toggleLoadingSpinner(show) {
@@ -316,6 +328,37 @@
                 toggleInputs(false);
                 isApiProcessing = false;
             });
+        }
+
+        async function exportSession() {
+            toggleLoadingSpinner(true);
+            toggleInputs(true);
+
+            const response = await fetch('/export_session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            toggleLoadingSpinner(false);
+            toggleInputs(false);
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `session_${userId}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                alert('Session exported successfully.');
+            } else {
+                alert('Failed to export session.');
+            }
         }
 
         async function sendMessage() {

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from openai import OpenAI
 import os
 import fitz  # PyMuPDF
@@ -47,8 +47,29 @@ def upload_pdf():
     # Prepare thank you message with user's name
     thank_you_message = f"Nice to meet you, {user_name.strip()}! What are your most important 3 responsibilities at work?"
     
+    session['messages'].append({"role": "assistant", "content": thank_you_message})
     session['step'] = 3  # Skip to step 3 since we have the name and resume
     return jsonify({"message": thank_you_message})
+
+@app.route('/export_session', methods=['POST'])
+def export_session():
+    user_id = request.json['user_id']
+    session = sessions.get(user_id)
+
+    if not session:
+        return jsonify({"message": "Session not found. Please start a new session."}), 404
+
+    # Create a text file with the session details
+    file_path = f"session_{user_id}.txt"
+    with open(file_path, 'w') as file:
+        file.write("Chat Session\n")
+        file.write("=" * 40 + "\n\n")
+        for message in session['messages']:
+            role = "User" if message['role'] == 'user' else "Assistant"
+            file.write(f"{role}: {message['content']}\n\n\n\n")
+
+    return send_file(file_path, as_attachment=True, download_name=f"session_{user_id}.txt")
+
 
 @app.route('/next_step', methods=['POST'])
 def next_step():
@@ -60,6 +81,9 @@ def next_step():
         return jsonify({"message": "Session not found. Please start a new session."}), 404
 
     step = session['step']
+    messages = session['messages']
+    messages.append({"role": "user", "content": user_input})
+
     if step == 1:
         session['data']['name'] = user_input
         next_message = "Nice to meet you " + session['data']['name'] + "! In 25 words or less, how would you describe your current job if someone you didn't know asked you at a party?"
@@ -104,8 +128,6 @@ def next_step():
         next_message = "Please select 2-3 jobs for a personalized test."
     else:
         # Continuation of the conversation after the test
-        messages = session['messages']
-        messages.append({"role": "user", "content": user_input})
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -118,6 +140,8 @@ def next_step():
         messages.append({"role": "assistant", "content": next_message})
         session['messages'] = messages
 
+    messages.append({"role": "assistant", "content": next_message})
+    session['messages'] = messages
     session['step'] += 1
     return jsonify({"message": next_message})
 
