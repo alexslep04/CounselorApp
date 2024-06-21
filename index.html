@@ -284,6 +284,14 @@
         }
 
         async function startSession() {
+            // Clear previous chat messages and job suggestions
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('jobGrid').innerHTML = '';
+            document.getElementById('jobContainer').style.display = 'none';
+
+            // Generate a new userId for the new session
+            userId = Math.random().toString(36).substring(7);
+
             toggleLoadingSpinner(true);
             toggleInputs(true);
 

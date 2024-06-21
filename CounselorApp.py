@@ -18,7 +18,7 @@ def home():
 def start_session():
     user_id = request.json['user_id']
     sessions[user_id] = {"step": 1, "data": {}, "messages": []}
-    welcome_message = "Hello! Please upload your CV/resume if you have one. If not, send your name to get started!"
+    welcome_message = "Hello! Please upload your CV/resume if you have one. If not, enter your name to get started!"
     sessions[user_id]['messages'].append({"role": "assistant", "content": welcome_message})
     return jsonify({"message": welcome_message})
 
