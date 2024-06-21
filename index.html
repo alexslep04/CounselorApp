@@ -317,32 +317,18 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ user_id: userId })
-            }).then(response => response.json())
-                .then(data => {
-                    toggleLoadingSpinner(false);
-                    toggleInputs(false);
-                    isApiProcessing = false;
-
-                    if (data.message === "Session ended successfully.") {
-                        // Clear the chat messages
-                        clearChatMessages();
-                        alert('Session ended successfully.');
-                    } else {
-                        alert(data.message);
-                    }
-                }).catch(error => {
-                    console.error('Error stopping session:', error);
-                    toggleLoadingSpinner(false);
-                    toggleInputs(false);
-                    isApiProcessing = false;
-                });
+            }).then(response => {
+                toggleLoadingSpinner(false);
+                toggleInputs(false);
+                isApiProcessing = false;
+                // Handle response if needed
+            }).catch(error => {
+                console.error('Error stopping session:', error);
+                toggleLoadingSpinner(false);
+                toggleInputs(false);
+                isApiProcessing = false;
+            });
         }
-
-        function clearChatMessages() {
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = '';
-        }
-
 
         async function exportSession() {
             toggleLoadingSpinner(true);

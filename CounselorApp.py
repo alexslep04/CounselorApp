@@ -18,7 +18,9 @@ def home():
 def start_session():
     user_id = request.json['user_id']
     sessions[user_id] = {"step": 1, "data": {}, "messages": []}
-    return jsonify({"message": "Hello! Please upload your CV/resume if you have one. If not send your name to get started!"})
+    welcome_message = "Hello! Please upload your CV/resume if you have one. If not, send your name to get started!"
+    sessions[user_id]['messages'].append({"role": "assistant", "content": welcome_message})
+    return jsonify({"message": welcome_message})
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
@@ -69,18 +71,6 @@ def export_session():
             file.write(f"{role}: {message['content']}\n\n\n\n")
 
     return send_file(file_path, as_attachment=True, download_name=f"session_{user_id}.txt")
-
-@app.route('/stop_session', methods=['POST'])
-def stop_session():
-    user_id = request.json['user_id']
-    
-    # Remove the session data for the user
-    if user_id in sessions:
-        del sessions[user_id]
-        return jsonify({"message": "Session ended successfully."})
-    else:
-        return jsonify({"message": "Session not found."}), 404
-
 
 
 @app.route('/next_step', methods=['POST'])
@@ -135,7 +125,8 @@ def next_step():
         )
         session['data']['job_suggestions'] = response.choices[0].message.content.strip()
         next_message = f"Based on your input, here are some job suggestions:\n\n{session['data']['job_suggestions']}\n\n"
-        messages.append({"role": "assistant", "content": next_message})
+        if not messages or messages[-1]['content'] != next_message:  # Check for duplication
+            messages.append({"role": "assistant", "content": next_message})
         session['step'] = 11
     elif step == 11:
         next_message = "Please select 2-3 jobs for a personalized test."
@@ -153,9 +144,12 @@ def next_step():
         if not messages or messages[-1]['content'] != next_message:  # Check for duplication
             messages.append({"role": "assistant", "content": next_message})
 
+    if not messages or messages[-1]['content'] != next_message:  # Check for duplication
+        messages.append({"role": "assistant", "content": next_message})  # Save the assistant's message
     session['messages'] = messages
     session['step'] += 1
     return jsonify({"message": next_message})
+
 
 @app.route('/generate_more_info', methods=['POST'])
 def generate_more_info():
