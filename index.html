@@ -256,9 +256,11 @@
             <div class="job-title">Click 'More Info' to learn additional details about each job.<br><br> Select the 2-3 jobs that interest you the most, and then click 'Help Me Choose' to continue.</div>
             <div id="jobGrid"></div>
             <div class="test-buttons">
-                <button class="generate-test-button" onclick="generatePersonalizedTest()" disabled
-                        id="generateTestButton">
+                <button class="generate-test-button" onclick="generatePersonalizedTest()" disabled id="generateTestButton">
                     Help Me Choose
+                </button>
+                <button class="generate-test-button" onclick="regenerateJobSuggestions()" disabled id="regenerateJobSuggestionsButton">
+                    Regenerate Job Suggestions
                 </button>
             </div>
         </div>
@@ -274,6 +276,7 @@
             document.getElementById('sendButton').disabled = disabled;
             document.getElementById('startButton').disabled = disabled;
             document.getElementById('generateTestButton').disabled = disabled;
+            document.getElementById('regenerateJobSuggestionsButton').disabled = disabled;
             document.getElementById('stopSessionButton').disabled = disabled;
             document.getElementById('exportSessionButton').disabled = disabled;
         }
@@ -451,6 +454,30 @@
             }
         }
 
+        async function regenerateJobSuggestions() {
+            if (isApiProcessing) return;
+
+            toggleLoadingSpinner(true);
+            toggleInputs(true);
+            isApiProcessing = true;
+
+            const response = await fetch('/regenerate_job_suggestions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            toggleLoadingSpinner(false);
+            toggleInputs(false);
+            isApiProcessing = false;
+
+            const data = await response.json();
+            addMessage(data.message, 'bot');
+            displayJobGrid(data.message);
+        }
+
         function addMessage(message, sender) {
             const messageElement = document.createElement('div');
             messageElement.className = `message ${sender}`;
@@ -516,6 +543,7 @@
             });
 
             document.getElementById('generateTestButton').disabled = false;
+            document.getElementById('regenerateJobSuggestionsButton').disabled = false;
         }
 
         function limitCheckedBoxes() {

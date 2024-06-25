@@ -248,6 +248,33 @@ def evaluate_test():
     
     return jsonify({"message": f"Based on your answers, the best fit job for you is: {best_fit_job}. Thank you for using our service!"})
 
+@app.route('/regenerate_job_suggestions', methods=['POST'])
+def regenerate_job_suggestions():
+    user_id = request.json['user_id']
+    session = sessions.get(user_id)
+
+    if not session:
+        return jsonify({"message": "Session not found. Please start a new session."}), 404
+
+    # Generate new job suggestions
+    prompt = generate_prompt(session['data'])
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt},
+        ]
+    )
+    job_suggestions = response.choices[0].message.content.strip()
+    session['data']['job_suggestions'] = job_suggestions
+    
+    # Prepare the response message
+    next_message = f"Based on your input, here are some job suggestions:\n\n{job_suggestions}\n\n"
+    if not session['messages'] or session['messages'][-1]['content'] != next_message:  # Check for duplication
+        session['messages'].append({"role": "assistant", "content": next_message})
+
+    return jsonify({"message": next_message})
+
 def extract_text_from_pdf(file_path):
     text = ""
     doc = fitz.open(file_path)
@@ -298,6 +325,7 @@ def ask_personality_test_questions(session):
     questions = session['data']['personality_test'].split("\n")
     question_index = len(session['data']['personality_test_answers'])
     return jsonify({"message": questions[question_index]})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
