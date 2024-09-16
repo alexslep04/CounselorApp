@@ -4,7 +4,7 @@ import os
 import fitz  # PyMuPDF
 import tempfile
 
-client = OpenAI(api_key='sk-proj-bMRs70IJUB9sPRWYTo5AT3BlbkFJdTJyVq9vvBq00vLsZ1Jo')
+client = OpenAI(api_key='') # store key in hidden env
 
 app = Flask(__name__)
 
